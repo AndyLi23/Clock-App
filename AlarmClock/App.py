@@ -8,6 +8,177 @@ import sys
 import playsound
 
 
+class EditAlarm(QMainWindow):
+    def __init__(self, *args, **kwargs):
+        super(EditAlarm, self).__init__(*args, **kwargs)
+        self.setWindowTitle("Edit Alarm")
+        self.setGeometry(400, 20, 300, 200)
+        self.timer = Timer()
+        self.PMB = False
+        self.alarmToBeRemoved = None
+        self.initUI()
+        self.setStylesheet()
+
+    def initUI(self):
+        self.centralWidget = QWidget()
+
+        self.setCentralWidget(self.centralWidget)
+
+        layout = QHBoxLayout()
+        layout2 = QVBoxLayout()
+        layout3 = QVBoxLayout()
+
+        self.hourBox = QPlainTextEdit(self.centralWidget)
+        self.hourBox.setLineWrapMode(False)
+        self.hourBox.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.hourBox.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.minuteBox = QPlainTextEdit(self.centralWidget)
+        self.minuteBox.setLineWrapMode(False)
+        self.minuteBox.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.minuteBox.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.colon = QLabel(":")
+        self.colon.setStyleSheet(
+            "QLabel {width: 5px; background:#222222; padding:0;margin:0;}")
+        self.amPm = QComboBox()
+        self.amPm.addItems(["AM", "PM"])
+        self.amPm.activated.connect(self.amPmActivated)
+        layout.addWidget(self.hourBox)
+        layout.addWidget(self.colon)
+        layout.addWidget(self.minuteBox)
+        layout.addWidget(self.amPm)
+
+        self.addAlarmB = QPushButton("Add")
+        self.addAlarmB.clicked.connect(self.startAlarm)
+        layout2.addWidget(self.addAlarmB)
+
+        self.removeAlarmCB = QComboBox()
+        self.removeAlarmCB.addItems(self.timer.getAlarms().split("\n"))
+        self.removeAlarmCB.activated.connect(self.removeAlarmCBActivated)
+        layout2.addWidget(self.removeAlarmCB)
+
+        self.removeAlarmB = QPushButton("Remove")
+        self.removeAlarmB.clicked.connect(self.removeAlarm)
+        layout2.addWidget(self.removeAlarmB)
+
+        layout.setAlignment(Qt.AlignCenter)
+        layout2.setAlignment(Qt.AlignCenter)
+        layout3.setAlignment(Qt.AlignCenter)
+        layout3.addLayout(layout)
+        layout3.addLayout(layout2)
+
+        self.centralWidget.setLayout(layout3)
+        self.centralWidget.setStyleSheet("""
+        QPlainTextEdit {
+            background: #333333;
+            padding: 3px;
+            color: white;
+            border: none;
+            font-size: 20px;
+            min-height: 30px;
+            max-height: 30px;
+            margin: 0;
+        }
+        QPushButton {
+            width: 200px;
+            max-width: 300px;
+        }
+        QComboBox {
+            padding-left: 10px;
+            font-size: 16px;
+            color: white;
+            background: #444444;
+            min-height: 30px;
+            border: none;
+            margin: 0;
+            min-width: 100px;
+        }
+        QComboBox:drop-down {
+            color: white;
+        }
+        QLabel {
+            background: #222222;
+        }
+        """)
+
+        timer = QTimer(self)
+
+        timer.timeout.connect(self.updateAll)
+
+        # update the timer every hundredth second
+        timer.start(10)
+
+        self.show()
+
+    def startAlarm(self):
+        t1, t2 = self.hourBox.toPlainText(), self.minuteBox.toPlainText()
+        if t1 and t2:
+            if all(i.isdigit() for i in t1) and int(t1) >= 1 and int(t1) <= 12 and all(i.isdigit() for i in t2) and int(t2) >= 0 and int(t2) <= 59:
+                self.muted = False
+                if self.PMB:
+                    t1 = str((int(t1)+12) % 24)
+                if len(t2) == 1:
+                    t2 = "0" + t2
+                if len(t1) == 1:
+                    t1 = "0" + t1
+                self.timer.alarm(t1+":"+t2)
+
+    def removeAlarmCBActivated(self, index):
+        if self.timer.getAlarms():
+            self.alarmToBeRemoved = self.timer.getAlarms().split("\n")[index]
+
+    def amPmActivated(self, index):
+        if index == 1:
+            self.PMB = True
+        else:
+            self.PMB = False
+
+    def removeAlarm(self):
+        if self.alarmToBeRemoved:
+            temp = self.alarmToBeRemoved.split(" ")
+            pmb = (temp[1] == "PM")
+            t1, t2 = temp[0].split(":")
+            if pmb:
+                t1 = str((int(t1)+12) % 24)
+            if len(t2) == 1:
+                t2 = "0" + t2
+            if len(t1) == 1:
+                t1 = "0" + t1
+            self.timer.cancelAlarm(t1+":"+t2)
+            self.alarmToBeRemoved = None
+
+    def updateAll(self):
+        self.removeAlarmCB.clear()
+        self.removeAlarmCB.addItems(self.timer.getAlarms().split("\n"))
+        if not self.alarmToBeRemoved and self.timer.getAlarms():
+            self.alarmToBeRemoved = self.timer.getAlarms().split("\n")[0]
+
+    def setStylesheet(self):
+        self.setStyleSheet("""
+        QWidget {
+            background: #222222;
+        }
+        QLabel {
+            color: white;
+            font-size: 20px;
+            font-family: Arial;
+            padding: 5px 20px 5px 20px;
+            background: #333333;
+            border-radius: 10px;
+            border: none;
+            text-align: center;
+        }
+        QPushButton {
+            color: white;
+            font-size: 20px;
+            border: 2px solid white;
+            padding: 1px 20px 2px 20px;
+        }
+        QPushButton:pressed {
+            background: #333333;
+        }
+        """)
+
+
 class App(QMainWindow):
 
     def __init__(self, *args, **kwargs):
@@ -24,6 +195,10 @@ class App(QMainWindow):
         self.initUI()
 
     def initUI(self):
+
+        self.alarmDialog = EditAlarm(self)
+        self.alarmDialog.hide()
+
         # tabs
         self.tabs = QTabWidget()
 
@@ -156,79 +331,31 @@ class App(QMainWindow):
         """)
 
         # alarm
-        layout = QHBoxLayout()
         layout2 = QVBoxLayout()
-        layout3 = QVBoxLayout()
 
-        self.hourBox = QPlainTextEdit(self.tab3)
-        self.hourBox.setLineWrapMode(False)
-        self.hourBox.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.hourBox.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.minuteBox = QPlainTextEdit(self.tab3)
-        self.minuteBox.setLineWrapMode(False)
-        self.minuteBox.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.minuteBox.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.colon = QLabel(":")
-        self.colon.setStyleSheet(
-            "QLabel {width: 5px; background:#222222; padding:0;margin:0;}")
-        self.amPm = QComboBox()
-        self.amPm.addItems(["AM", "PM"])
-        self.amPm.activated.connect(self.amPmActivated)
-        layout.addWidget(self.hourBox)
-        layout.addWidget(self.colon)
-        layout.addWidget(self.minuteBox)
-        layout.addWidget(self.amPm)
+        self.editAlarmB = QPushButton("Edit")
+        self.editAlarmB.clicked.connect(self.editAlarm)
+        layout2.addWidget(self.editAlarmB)
 
-        self.alarmDisplay = QLabel("")
-        self.alarmDisplay.setAlignment(Qt.AlignCenter)
-        layout2.addWidget(self.alarmDisplay)
-        self.addAlarmB = QPushButton("Add")
-        self.addAlarmB.clicked.connect(self.startAlarm)
-        layout2.addWidget(self.addAlarmB)
         self.muteAlarmB = QPushButton("Mute")
         self.muteAlarmB.clicked.connect(self.muteAlarm)
         self.muteAlarmB.hide()
         layout2.addWidget(self.muteAlarmB)
-        self.cancleAlarmB = QPushButton("Cancel")
+        self.alarmDisplay = QLabel("")
+        self.alarmDisplay.setAlignment(Qt.AlignCenter)
+        layout2.addWidget(self.alarmDisplay)
+        '''self.cancleAlarmB = QPushButton("Cancel")
         self.cancleAlarmB.clicked.connect(self.cancelAlarm)
-        layout2.addWidget(self.cancleAlarmB)
+        layout2.addWidget(self.cancleAlarmB)'''
 
-        layout.setAlignment(Qt.AlignCenter)
         layout2.setAlignment(Qt.AlignCenter)
-        layout3.setAlignment(Qt.AlignCenter)
-        layout3.addLayout(layout)
-        layout3.addLayout(layout2)
 
         self.tab4 = QWidget()
-        self.tab4.setLayout(layout3)
+        self.tab4.setLayout(layout2)
         self.tab4.setStyleSheet("""
-        QPlainTextEdit {
-            background: #333333;
-            padding: 3px;
-            color: white;
-            border: none;
-            font-size: 20px;
-            min-height: 30px;
-            max-height: 30px;
-            margin: 0;
-        }
         QPushButton {
             width: 200px;
             max-width: 300px;
-        }
-        QComboBox {
-            padding-left: 10px;
-            font-size: 16px;
-            color: white;
-            background: #444444;
-            min-height: 30px;
-            max-height: 30px;
-            border: none;
-            margin: 0;
-            min-width: 100px;
-        }
-        QComboBox::drop-down {
-            color: white
         }
         QLabel {
             background: #222222;
@@ -262,6 +389,7 @@ class App(QMainWindow):
         self.count = (self.count + 1) % 20
 
     def updateAlarm(self):
+        self.updateAlarmDisplay()
         if self.timer.getAlarm():
             self.muteAlarmB.show()
             if not self.muted:
@@ -274,34 +402,17 @@ class App(QMainWindow):
     def muteAlarm(self):
         self.muted = True
 
-    def startAlarm(self):
-        t1, t2 = self.hourBox.toPlainText(), self.minuteBox.toPlainText()
-        if t1 and t2:
-            if all(i.isdigit() for i in t1) and int(t1) >= 1 and int(t1) <= 12 and all(i.isdigit() for i in t2) and int(t2) >= 0 and int(t2) <= 59:
-                am_pm = "AM"
-                self.muted = False
-                if self.PMB:
-                    t1 = str((int(t1)+12) % 24)
-                    am_pm = "PM"
-                if len(t2) == 1:
-                    t2 = "0" + t2
-                if len(t1) == 1:
-                    t1 = "0" + t1
-                self.timer.alarm(t1+":"+t2)
+    def updateAlarmDisplay(self):
+        self.alarmDisplay.setText(self.timer.getAlarms())
 
-                self.alarmDisplay.setText(
-                    self.hourBox.toPlainText()+":"+t2 + " " + am_pm)
-
-    def cancelAlarm(self):
-        self.timer.cancelAlarm()
+    def cancelAlarm(self, t):
+        self.timer.cancelAlarm(t)
         self.muteAlarmB.hide()
         self.alarmDisplay.setText("")
 
-    def amPmActivated(self, index):
-        if index == 1:
-            self.PMB = True
-        else:
-            self.PMB = False
+    def editAlarm(self):
+        self.alarmDialog.show()
+        self.alarmDialog.raise_()
 
     def updateClock(self):
         temp = self.timer.getTime()
