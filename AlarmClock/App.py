@@ -2,9 +2,10 @@ from PyQt5.QtWidgets import *
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-import sys
 from alarm import Timer
-import time
+import subprocess
+import sys
+import playsound
 
 
 class App(QMainWindow):
@@ -17,6 +18,9 @@ class App(QMainWindow):
         self.setStylesheet()
         self.stflag = False
         self.curC = 0
+        self.ended = False
+        self.PMB = False
+        self.muted = False
         self.initUI()
 
     def initUI(self):
@@ -81,13 +85,16 @@ class App(QMainWindow):
         # layout.setAlignment(Qt.AlignCenter)
         self.textbox = QPlainTextEdit(self.tab3)
         self.textbox.setLineWrapMode(False)
-        self.textbox.verticalScrollBar().hide()
+        self.textbox.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.textbox.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.textbox1 = QPlainTextEdit(self.tab3)
         self.textbox1.setLineWrapMode(False)
-        self.textbox1.verticalScrollBar().hide()
+        self.textbox1.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.textbox1.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.textbox2 = QPlainTextEdit(self.tab3)
         self.textbox2.setLineWrapMode(False)
-        self.textbox2.verticalScrollBar().hide()
+        self.textbox2.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.textbox2.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         self.h = QLabel("h")
         self.m = QLabel("m")
@@ -149,7 +156,84 @@ class App(QMainWindow):
         """)
 
         # alarm
+        layout = QHBoxLayout()
+        layout2 = QVBoxLayout()
+        layout3 = QVBoxLayout()
+
+        self.hourBox = QPlainTextEdit(self.tab3)
+        self.hourBox.setLineWrapMode(False)
+        self.hourBox.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.hourBox.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.minuteBox = QPlainTextEdit(self.tab3)
+        self.minuteBox.setLineWrapMode(False)
+        self.minuteBox.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.minuteBox.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.colon = QLabel(":")
+        self.colon.setStyleSheet(
+            "QLabel {width: 5px; background:#222222; padding:0;margin:0;}")
+        self.amPm = QComboBox()
+        self.amPm.addItems(["AM", "PM"])
+        self.amPm.activated.connect(self.amPmActivated)
+        layout.addWidget(self.hourBox)
+        layout.addWidget(self.colon)
+        layout.addWidget(self.minuteBox)
+        layout.addWidget(self.amPm)
+
+        self.alarmDisplay = QLabel("")
+        self.alarmDisplay.setAlignment(Qt.AlignCenter)
+        layout2.addWidget(self.alarmDisplay)
+        self.addAlarmB = QPushButton("Add")
+        self.addAlarmB.clicked.connect(self.startAlarm)
+        layout2.addWidget(self.addAlarmB)
+        self.muteAlarmB = QPushButton("Mute")
+        self.muteAlarmB.clicked.connect(self.muteAlarm)
+        self.muteAlarmB.hide()
+        layout2.addWidget(self.muteAlarmB)
+        self.cancleAlarmB = QPushButton("Cancel")
+        self.cancleAlarmB.clicked.connect(self.cancelAlarm)
+        layout2.addWidget(self.cancleAlarmB)
+
+        layout.setAlignment(Qt.AlignCenter)
+        layout2.setAlignment(Qt.AlignCenter)
+        layout3.setAlignment(Qt.AlignCenter)
+        layout3.addLayout(layout)
+        layout3.addLayout(layout2)
+
         self.tab4 = QWidget()
+        self.tab4.setLayout(layout3)
+        self.tab4.setStyleSheet("""
+        QPlainTextEdit {
+            background: #333333;
+            padding: 3px;
+            color: white;
+            border: none;
+            font-size: 20px;
+            min-height: 30px;
+            max-height: 30px;
+            margin: 0;
+        }
+        QPushButton {
+            width: 200px;
+            max-width: 300px;
+        }
+        QComboBox {
+            padding-left: 10px;
+            font-size: 16px;
+            color: white;
+            background: #444444;
+            min-height: 30px;
+            max-height: 30px;
+            border: none;
+            margin: 0;
+            min-width: 100px;
+        }
+        QComboBox::drop-down {
+            color: white
+        }
+        QLabel {
+            background: #222222;
+        }
+        """)
 
         # set tabs
         self.tabs.addTab(self.tab1, "Clock")
@@ -174,9 +258,50 @@ class App(QMainWindow):
         self.updateStopwatch()
         self.updateClock()
         self.updateTimer()
-        '''self.count = (self.count + 1) % 4
-        if self.count == 0:
-            self.clockUpdateColor()'''
+        self.updateAlarm()
+        self.count = (self.count + 1) % 20
+
+    def updateAlarm(self):
+        if self.timer.getAlarm():
+            self.muteAlarmB.show()
+            if not self.muted:
+                if self.count == 0:
+                    playsound.playsound("alarm.mp3", False)
+        else:
+            self.muted = False
+            self.muteAlarmB.hide()
+
+    def muteAlarm(self):
+        self.muted = True
+
+    def startAlarm(self):
+        t1, t2 = self.hourBox.toPlainText(), self.minuteBox.toPlainText()
+        if t1 and t2:
+            if all(i.isdigit() for i in t1) and int(t1) >= 1 and int(t1) <= 12 and all(i.isdigit() for i in t2) and int(t2) >= 0 and int(t2) <= 59:
+                am_pm = "AM"
+                self.muted = False
+                if self.PMB:
+                    t1 = str((int(t1)+12) % 24)
+                    am_pm = "PM"
+                if len(t2) == 1:
+                    t2 = "0" + t2
+                if len(t1) == 1:
+                    t1 = "0" + t1
+                self.timer.alarm(t1+":"+t2)
+
+                self.alarmDisplay.setText(
+                    self.hourBox.toPlainText()+":"+t2 + " " + am_pm)
+
+    def cancelAlarm(self):
+        self.timer.cancelAlarm()
+        self.muteAlarmB.hide()
+        self.alarmDisplay.setText("")
+
+    def amPmActivated(self, index):
+        if index == 1:
+            self.PMB = True
+        else:
+            self.PMB = False
 
     def updateClock(self):
         temp = self.timer.getTime()
@@ -211,8 +336,13 @@ class App(QMainWindow):
 
     def updateTimer(self):
         if self.timer.getTimer() != True:
+            self.ended = False
             self.timerLabel.setText(self.timer.getTimer())
         else:
+            if not self.ended:
+                playsound.playsound("alarm.mp3", False)
+                self.restartTimer()
+                self.ended = True
             self.timerLabel.setText("0.00s")
 
     def stopTimer(self):
@@ -257,7 +387,7 @@ class App(QMainWindow):
             color: white;
             font-size: 20px;
             border: 2px solid white;
-            self.padding: 20px;
+            padding: 1px 20px 2px 20px;
         }
         QTabBar {
             font-size: 20px;

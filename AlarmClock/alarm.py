@@ -19,14 +19,13 @@ class Timer():
         self.alarmGoal = None
 
     def startTimer(self, t):
-        if not self.timerP:
-            self.restartTimer()
-        if self.timerPrev:
-            self.timerGoal = self.timerPrev
-        else:
-            self.timerGoal = int(t)
-        self.timerStartTime = time.time()
-        self.timerP = False
+        if self.timerP:
+            if self.timerPrev:
+                self.timerGoal = self.timerPrev
+            else:
+                self.timerGoal = int(t)
+            self.timerStartTime = time.time()
+            self.timerP = False
 
     def getTimer(self):
         if self.timerP:
@@ -57,16 +56,12 @@ class Timer():
         self.timerPrev = 0
 
     def startStopwatch(self):
-        if not self.stpaused:
-            pass
-        else:
+        if self.stpaused:
             self.stopwatchStart = time.time()
             self.stpaused = False
 
     def stopStopwatch(self):
-        if self.stpaused:
-            pass
-        else:
+        if not self.stpaused:
             self.prevTime = self.getStopwatch()
             self.prev = time.time() - self.stopwatchStart + self.prev
             self.stopwatchStart = None
@@ -91,8 +86,12 @@ class Timer():
     def alarm(self, t):
         self.alarmGoal = t
 
+    def cancelAlarm(self):
+        self.alarmGoal = None
+
     def getAlarm(self):
-        return str(datetime.datetime.today()).split(".")[0] == self.alarmGoal
+        return ":".join(str(datetime.datetime.today()).split(
+            ".")[0].split(" ")[1].split(":")[0:2]) == self.alarmGoal
 
     def getTime(self):
         return str(datetime.datetime.today()).split(".")[0]
