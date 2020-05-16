@@ -194,6 +194,7 @@ class App(QMainWindow):
         self.ended = False
         self.PMB = False
         self.muted = False
+        self.prevAlarmTime = ""
         self.initUI()
 
     def initUI(self):
@@ -342,13 +343,14 @@ class App(QMainWindow):
         self.muteAlarmB = QPushButton("Mute")
         self.muteAlarmB.clicked.connect(self.muteAlarm)
         self.muteAlarmB.hide()
+        self.unmuteAlarmB = QPushButton("Unmute")
+        self.unmuteAlarmB.clicked.connect(self.unmuteAlarm)
+        self.unmuteAlarmB.hide()
         layout2.addWidget(self.muteAlarmB)
+        layout2.addWidget(self.unmuteAlarmB)
         self.alarmDisplay = QLabel("")
         self.alarmDisplay.setAlignment(Qt.AlignCenter)
         layout2.addWidget(self.alarmDisplay)
-        '''self.cancleAlarmB = QPushButton("Cancel")
-        self.cancleAlarmB.clicked.connect(self.cancelAlarm)
-        layout2.addWidget(self.cancleAlarmB)'''
 
         layout2.setAlignment(Qt.AlignCenter)
 
@@ -393,24 +395,28 @@ class App(QMainWindow):
     def updateAlarm(self):
         self.updateAlarmDisplay()
         if self.timer.getAlarm():
+            if self.timer.getAlarmTime() != self.prevAlarmTime:
+                self.muted = False
+                self.prevAlarmTime = self.timer.getAlarmTime()
             self.muteAlarmB.show()
             if not self.muted:
                 if self.count == 0:
                     playsound.playsound("alarm.mp3", False)
+            else:
+                self.unmuteAlarmB.show()
         else:
             self.muted = False
             self.muteAlarmB.hide()
+            self.unmuteAlarmB.hide()
 
     def muteAlarm(self):
         self.muted = True
 
+    def unmuteAlarm(self):
+        self.muted = False
+
     def updateAlarmDisplay(self):
         self.alarmDisplay.setText(self.timer.getAlarms())
-
-    def cancelAlarm(self, t):
-        self.timer.cancelAlarm(t)
-        self.muteAlarmB.hide()
-        self.alarmDisplay.setText("")
 
     def editAlarm(self):
         self.alarmDialog.show()

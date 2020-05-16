@@ -141,6 +141,9 @@ class Timer():
     def getTime(self):
         return str(datetime.datetime.today()).split(".")[0]
 
+    def getAlarmTime(self):
+        return ":".join(str(datetime.datetime.today()).split(".")[0].split(":")[:-1])
+
     def getDay(self):
         weekDays = ("Monday", "Tuesday", "Wednesday",
                     "Thursday", "Friday", "Saturday", "Sunday")
