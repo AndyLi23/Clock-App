@@ -136,7 +136,10 @@ class EditAlarm(QMainWindow):
 
     def removeAlarm(self):
         if self.alarmToBeRemoved:
-            temp = self.alarmToBeRemoved.split(" ")
+            if "--" in self.alarmToBeRemoved:
+                temp = self.alarmToBeRemoved.split(" ")[1:-1]
+            else:
+                temp = self.alarmToBeRemoved.split(" ")
             pmb = (temp[1] == "PM")
             t1, t2 = temp[0].split(":")
             if pmb:
@@ -398,6 +401,8 @@ class App(QMainWindow):
             if self.timer.getAlarmTime() != self.prevAlarmTime:
                 self.muted = False
                 self.prevAlarmTime = self.timer.getAlarmTime()
+                self.alarmDialog.removeAlarmCB.clear()
+                self.alarmDialog.removeAlarmCB.addItems(self.timer.getAlarms().split("\n"))
             self.muteAlarmB.show()
             if not self.muted:
                 if self.count == 0:
