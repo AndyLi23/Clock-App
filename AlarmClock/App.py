@@ -39,7 +39,7 @@ class EditAlarm(QMainWindow):
         self.colon = QLabel(":")
         self.colon.setStyleSheet(
             "QLabel {width: 5px; background:#222222; padding:0;margin:0;}")
-        self.amPm = QComboBox()
+        self.amPm = QComboBox(self.centralWidget)
         self.amPm.addItems(["AM", "PM"])
         self.amPm.activated.connect(self.amPmActivated)
         layout.addWidget(self.hourBox)
@@ -51,7 +51,7 @@ class EditAlarm(QMainWindow):
         self.addAlarmB.clicked.connect(self.startAlarm)
         layout2.addWidget(self.addAlarmB)
 
-        self.removeAlarmCB = QComboBox()
+        self.removeAlarmCB = QComboBox(self.centralWidget)
         self.removeAlarmCB.addItems(self.timer.getAlarms().split("\n"))
         self.removeAlarmCB.activated.connect(self.removeAlarmCBActivated)
         layout2.addWidget(self.removeAlarmCB)
@@ -121,6 +121,8 @@ class EditAlarm(QMainWindow):
                 if len(t1) == 1:
                     t1 = "0" + t1
                 self.timer.alarm(t1+":"+t2)
+        self.removeAlarmCB.clear()
+        self.removeAlarmCB.addItems(self.timer.getAlarms().split("\n"))
 
     def removeAlarmCBActivated(self, index):
         if self.timer.getAlarms():
@@ -145,10 +147,10 @@ class EditAlarm(QMainWindow):
                 t1 = "0" + t1
             self.timer.cancelAlarm(t1+":"+t2)
             self.alarmToBeRemoved = None
-
-    def updateAll(self):
         self.removeAlarmCB.clear()
         self.removeAlarmCB.addItems(self.timer.getAlarms().split("\n"))
+
+    def updateAll(self):
         if not self.alarmToBeRemoved and self.timer.getAlarms():
             self.alarmToBeRemoved = self.timer.getAlarms().split("\n")[0]
 
