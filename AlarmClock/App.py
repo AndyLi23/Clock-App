@@ -12,7 +12,7 @@ class EditAlarm(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(EditAlarm, self).__init__(*args, **kwargs)
         self.setWindowTitle("Edit Alarm")
-        self.setGeometry(400, 20, 300, 200)
+        self.setGeometry(280, 200, 300, 200)
         self.timer = Timer()
         self.PMB = False
         self.alarmToBeRemoved = None
@@ -402,7 +402,8 @@ class App(QMainWindow):
                 self.muted = False
                 self.prevAlarmTime = self.timer.getAlarmTime()
                 self.alarmDialog.removeAlarmCB.clear()
-                self.alarmDialog.removeAlarmCB.addItems(self.timer.getAlarms().split("\n"))
+                self.alarmDialog.removeAlarmCB.addItems(
+                    self.timer.getAlarms().split("\n"))
             self.muteAlarmB.show()
             if not self.muted:
                 if self.count == 0:
