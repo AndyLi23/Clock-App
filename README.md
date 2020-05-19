@@ -1,2 +1,2 @@
 <strong>Clock-App</strong> <br>
-A clock/stopwatch/timer/alarm and a pure alarm written in Python, GUI is PyQt5
+A clock/stopwatch/timer/alarm written in Python, PyQt5 GUI
