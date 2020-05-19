@@ -188,7 +188,7 @@ class App(QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super(App, self).__init__(*args, **kwargs)
-        self.setWindowTitle("AlarmClock")
+        self.setWindowTitle("Clock")
         self.setGeometry(0, 0, 400, 300)
         self.timer = Timer()
         self.setStylesheet()
